@@ -176,8 +176,8 @@ exports.inactiveuserthreshold = 1000*60*60;
 exports.groupsranking = [' ', '+', '%', '@', '&', '~'];
 exports.groups = {
 	'~': {
-		id: "admin",
-		name: "Administrator",
+		id: "escientist",
+		name: "Evil Scientist",
 		root: true,
 		rank: 5
 	},
