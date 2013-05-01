@@ -3251,7 +3251,7 @@ function getRandMessage(user){
                         break;
 		case 16: message = message + user.name + ' is blasting off again!';
 			break;
-		case 17: message = message + 'A large Ariados came down and picked up' + user.name + ' !';
+		case 17: message = message + 'A large Ariados came down and picked up ' + user.name + ' !';
 			break;
 		case 18: message = message + user.name + ' was toxic stalled by Gliscor!';
                         break;
@@ -3263,7 +3263,7 @@ function getRandMessage(user){
 			break;
 		case 22: message = message + user.name + ' peered through the hole on Shedinja\'s back';
 			break;
-		case 23: message = message + user.name + ' recieved judgment from the almighty Arceus!';
+		case 23: message = message + user.name + ' received judgement from the almighty Arceus!';
 			break;
 		case 24: message = message + user.name + ' used Final Gambit and missed!';
 			break;
@@ -3283,7 +3283,7 @@ function getRandMessage(user){
                         break;
                 case 32: message = message + user.name + ' died making love to an Excadrill!';
                         break;
-                default: message = message + user.name + ' was burried in Smogoon\'s homework!';
+                default: message = message + user.name + ' was buried in Smogoon\'s homework!';
         };
 	message = message + ' ~~';
 	return message;
