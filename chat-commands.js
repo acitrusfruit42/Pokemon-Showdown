@@ -1,3 +1,97 @@
+// testing check
+/* tournament setup */
+if (typeof tour == "undefined") {
+	tour = new Object();
+}
+var tournamentFunctions = {
+	tiers: Tools.data.Formats,
+	shuffle: function(o){
+		for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+		return o;
+	},
+	nextRound: function(room) {
+		//round file names = user_id|user_id|status|user_id of who won
+
+		if (tour[room].winners.length == 1) {
+			rooms[room].addRaw("<hr /><h2>Congratulations " + sanitize(tour[room].winners[0]) + " you won the " + tour.tiers[tour[room].tier].name + " tournament.</h2><hr />");
+			tour.endTour(room);
+			return;
+		}
+
+		tour[room].round = [];
+
+		tour[room].Round = tour[room].Round + 1;
+		var msg = "<hr /><h2>Start of Round " + tour[room].Round + " of the " + tour.tiers[tour[room].tier].name + " Tournament</h2>";
+
+		var object = "winners";
+		if (tour[room].Round == 1) {
+			var object = "players";
+		}
+		var object = tour[room][object];
+		
+		//clear people that move onto the next round
+		if (tour[room].Round > 1) {
+			tour[room].winners = [];
+		}
+		
+		var len = object.length;
+		var ceil = Math.ceil(len/2);
+		var norm = len/2;
+		for (var i = 0; i < ceil; i++) {
+			var p1 = object[i * 2];
+			if (ceil - 1 == i && ceil > norm) {
+				//this person gets a bye
+				tour[room].winners[tour[room].winners.length] = p1;
+				tour[room].round[tour[room].round.length] = p1 + "|" + 0 + "|" + 2 + "|" + p1;
+				msg += "<div><b><font color=\"red\">" + sanitize(p1) + " gets a bye.</font></b></div>";
+			}
+			else {
+				//normal opponent
+				var p2 = object[eval((i * 2) + '+' + 1)];
+				tour[room].round[tour[room].round.length] = p1 + "|" + p2 + "|" + 0 + "|" + 0;
+				msg += "<div><b>" + sanitize(p1) + " vs. " + sanitize(p2) + "</b></div>";
+			}
+		}
+		msg += "<hr />";
+		rooms[room].addRaw(msg);
+	},
+	startTour: function(room) {
+		tour[room].status = 2;
+		tour.shuffle(tour[room].players);
+		tour.nextRound(room);
+	},
+	endTour: function(room) {
+		tour[room] = {
+			status: 0,
+			toursize: 0,
+			tier: "",
+			players: [],
+			round: [],
+			winners: [],
+			losers: [],
+			overallLoser: [],
+			Round: 0
+		};
+	}
+};
+for (var i in tournamentFunctions) {
+	tour[i] = tournamentFunctions[i];
+}
+for (var i in rooms) {
+	if (rooms[i].type == "lobby" && typeof tour[i] == "undefined") {
+		tour[i] = {
+			status: 0,
+			toursize: 0,
+			tier: "",
+			players: [],
+			round: [],
+			winners: [],
+			losers: [],
+			overallLoser: [],
+			Round: 0
+		};
+	}
+}
 /* to reload chat commands:
 
 >> for (var i in require.cache) delete require.cache[i];parseCommand = require('./chat-commands.js').parseCommand;''
@@ -36,14 +130,19 @@ var crypto = require('crypto');
  *     then output it normally.
  *
  */
-
 var modlog = modlog || fs.createWriteStream('logs/modlog.txt', {flags:'a+'});
+var poofeh = true;
+var gitpulling = false;
+var imgs = true;
 var updateServerLock = false;
+var kuponubip = '204.112.217.25';
 
 function parseCommandLocal(user, cmd, target, room, socket, message) {
 	if (!room) return;
 	cmd = cmd.toLowerCase();
 	switch (cmd) {
+
+	
 	case 'cmd':
 		var spaceIndex = target.indexOf(' ');
 		var cmd = target;
@@ -90,23 +189,175 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 		return false;
 		break;
+	case '!league':
+	case '!lunaraleaue':
+        case 'league':
+        case 'lunaraleague':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"> Information on the Fantasy Lab <i>Lunara League</i>. (Leader Name/Gym #/Type/Tier):<br />' +
+                        '- <a href"="http://fantasy-lab.no-ip.org/forums/showthread.php?tid=9" target="_blank">iSmogoon/TheSilverShadow (Dark-type, 8th)</a><br />' +
+                        '- <a href="http://fantasy-lab.no-ip.org/forums/showthread.php?tid=16" target="_blank">EnerG218 (Psychic, RU, 7th)</a><br />' +
+			'- <a href="http://fantasy-lab.no-ip.org/forums/showthread.php?tid=10" target="_blank">AOrtega (Fighting, CAP, 6th)</a><br />' +
+                        '- <a href="http://fantasy-lab.no-ip.org/forums/showthread.php?tid=12" target="_blank">SmashBrosBrawl (Steel, OU, 5th)</a><br />' +
+                        '- <a href="http://fantasy-lab.no-ip.org/forums/showthread.php?tid=11" target="_blank">Piiiikachuuu (Fire, OU, 4th)</a><br />' +
+                        '- <a href="http://fantasy-lab.no-ip.org/forums/showthread.php?tid=17" target="_blank">Aikenka (3rd, Electric, NU)</a><br />' +
+                        '- <a href="http://fantasy-lab.no-ip.org/forums/showthread.php?tid=13" target="_blank">Miner0 (Ground, OU, 2nd)</a><br />' +
+                        '- <a href="http://fantasy-lab.no-ip.org/forums/showthread.php?tid=1" target="_blank">Professor Xerilia (Flying, UU, 1st)</a>' +
+                        '</div>');
+                return false;
 
-	case 'me':
-	case 'mee':
-		if (canTalk(user, room)) return true;
-		break;
+       case '!miner0':
+        case '!miner':
+        case 'miner0':
+        case 'miner':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"><b>Information on Gym Leader Miner:</b><br />' +
+                        'Type: Ground<br />' +
+                        'Tier: Over Used (OU)<br />' +
+                        '<a href="http://50.112.63.201/forums/showthread.php?tid=13" target="_blank">Thread</a><br />' +
+                        'Signature Pokemon: Hippowdon<br />' +
+                        '<img src="http://pldh.net/media/pokecons_action/450.gif"><br />' +
+                        'Badge: Mine Badge<br />' +
+                        '<img src="http://i1305.photobucket.com/albums/s542/TheBattleTowerPS/th_037_zps7830eeed.png">' +
+                        '</div>');
+                return false;
+                break;
 
-	case '!birkal':
-	case 'birkal':
-		if (canTalk(user, room) && user.can('broadcast') && room.id === 'lobby') {
-			if (cmd === '!birkal') {
-				room.add('|c|'+user.getIdentity()+'|!birkal '+target, true);
-			}
-			room.logEntry(user.name + ' used /birkal ' + target);
-			room.add('|c| Birkal|/me '+target, true);
-			return false;
-		}
-		break;
+        case 'xerilia':
+        case '!xerilia':
+        case 'professorxerilia':
+        case '!professorxerilia':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"><b>Information on Gym Leader Xerilia:</b><br />' +
+                        'Type: Flying<br />' +
+                        'Tier: Under Used (UU)<br />' +
+                        '<a href="http://50.112.63.201/forums/showthread.php?tid=15" target="_blank">Thread</a><br />' +
+                        'Signature Pokemon: Tornadus<br />' +
+                        '<img src="http://www.poke-amph.com/black-white/sprites/small/641.png"><br />' +
+                        'Badge: Skylight Badge<br />' +
+                        '<img src="http://i1305.photobucket.com/albums/s542/TheBattleTowerPS/148_zpsc03fd480.png">' +
+                        '</div>');
+                return false;
+                break;
+
+        case 'aikenka':
+        case '!aikenka':
+        case 'aik':
+        case '!aik':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"><b>Information on Gym Leader Aikenka:</b><br />' +
+                        'Type: Electric<br />' +
+                        'Tier: Never Used (NU)<br />' +
+                        '<a href="http://50.112.63.201/forums/showthread.php?tid=17" target="_blank">Thread</a><br />' +
+                        'Signature Pokemon: Raichu<br />' +
+                        '<img src="http://www.poke-amph.com/black-white/sprites/small/026.png"><br />' +
+                        'Badge: Fission Storm Badge<br />' +
+                        '<img src="http://i1305.photobucket.com/albums/s542/TheBattleTowerPS/021_zpsc579bcbb.png">' +
+                        '</div>');
+                return false;
+                break;
+
+        case 'piiiikachuuu':
+        case '!piiiikachuuu':
+        case 'pika':
+        case '!pika':
+        case 'chuu':
+        case '!chuu':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"><b>Information on Gym Leader Piiiikachuuu:</b><br />' +
+                        'Type: Fire<br />' +
+                        'Tier: Over Used (OU)<br />' +
+                        '<a href="http://50.112.63.201/forums/showthread.php?tid=11" target="_blank">Thread</a><br />' +
+                        'Signature Pokemon: Ninetales<br />' +
+                        '<img src="http://www.poke-amph.com/black-white/sprites/small/038.png"><br />' +
+                        'Badge: Fire Badge<br />' +
+                        '<img src="http://i1305.photobucket.com/albums/s542/TheBattleTowerPS/038_zpsc9f8c94e.png">' +
+                        '</div>');
+                return false;
+                break;
+        case 'smashbrosrawl':
+        case '!smashbrosbrawl':
+        case 'smash':
+        case '!smash':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"><b>Information on Gym Leader SmashBrosBrawl:</b><br />' +
+                        'Type: Steel<br />' +
+                        'Tier: Over Used (OU)<br />' +
+                        '<a href="http://50.112.63.201/forums/showthread.php?tid=12" target="_blank">Thread</a><br />' +
+                        'Signature Pokemon: Lucario<br />' +
+                        '<img src="http://www.poke-amph.com/black-white/sprites/small/448.png"><br />' +
+                        'Badge: Steel Badge<br />' +
+                        '<img src="http://i1305.photobucket.com/albums/s542/TheBattleTowerPS/065_zpsd830d811.png">' +
+                        '</div>');
+                return false;
+                break;
+
+        case 'aortega':
+        case '!aortega':
+        case 'ao':
+        case '!ao':
+        case 'asshole':
+        case '!asshole':
+	case 'bitchman':
+	case '!batman':
+	case 'stripper':
+	case '!stripper':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"><b>Information on Gym Leader AOrtega aka Batman:</b><br />' +
+                        'Type: Fighting<br />' +
+                        'Tier: Create-A-Pokemon (CAP)<br />' +
+                        '<a href="http://50.112.63.201/forums/showthread.php?tid=10" target="_blank">Thread</a><br />' +
+                        'Signature Pokemon: Tomohawk<br />' +
+                        '<img src="http://50.112.63.201/forums/uploads/avatars/avatar_9.png?dateline=1366934006"><br />' +
+                        'Badge: Kombat Badge<br />' +
+                        '<img src="http://i1305.photobucket.com/albums/s542/TheBattleTowerPS/006_zps6f18aed3.png">' +
+                        '</div>');
+                return false;
+                break;
+
+        case 'energ218':
+        case '!EnerG218':
+        case 'energ':
+        case '!energ':
+	case 'energ':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"><b>Information on Gym Leader EnerG218:</b><br />' +
+                        'Type: Psychic<br />' +
+                        'Tier: Rarely Used (RU)<br />' +
+                        '<a href="http://50.112.63.201/forums/showthread.php?tid=16" target="_blank">Thread</a><br />' +
+                        'Signature Pokemon: Medicham<br />' +
+                        '<img src="http://www.poke-amph.com/black-white/sprites/small/308.png"><br />' +
+                        'Badge: Force Badge<br />' +
+                        '<img src="http://i1305.photobucket.com/albums/s542/TheBattleTowerPS/150_zpsd6a4d03e.png">' +
+                        '</div>');
+                return false;
+                break;
+
+        case 'smogoon':
+        case '!smogoon':
+        case 'goon':
+        case '!goon':
+                showOrBroadcastStart(user, cmd, room, socket, message);
+                showOrBroadcast(user, cmd, room, socket,
+                        '<div class="infobox"><b>Information on Gym Leader iSmogoon:</b><br />' +
+                        'Type: Dark<br />' +
+                        'Tier: Under Used and Over Used (UU and OU)<br />' +
+                        '<a href="http://50.112.63.201/forums/showthread.php?tid=9">Thread</a><br />' +
+                        'Signature Pokemon: Weavile<br />' +
+                        '<img src="http://www.poke-amph.com/black-white/sprites/small/461.png"><br />' +
+                        'Badge: Shadow Badge<br />' +
+                        '<img src="http://i1305.photobucket.com/albums/s542/TheBattleTowerPS/112_zps58abb527.png">' +
+                        '</div>');
+                return false;
+                break;
 
 	case 'namelock':
 	case 'nl':
@@ -154,6 +405,59 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 		return false;
 		break;
+
+	case 'me':
+	case 'mee':
+		if (canTalk(user, room)) {
+			if (config.chatfilter) {
+				var suffix = config.chatfilter(user, room, socket, target);
+				if (suffix === false) return false;
+				return '/' + cmd + ' ' + suffix;
+			}
+			return true;
+		}
+		break;
+/*
+	case '!birkal':
+	case 'birkal':
+		if (canTalk(user, room) && user.can('broadcast') && room.id === 'lobby') {
+			if (cmd === '!birkal') {
+				room.add('|c|'+user.getIdentity()+'|!birkal '+target, true);
+			}
+			room.logEntry(user.name + ' used /birkal ' + target);
+			room.add('|c| Birkal|/me '+target, true);
+			return false;
+		}
+		break;
+*/
+	case '!kupo':
+	case 'kupo':
+		if (canTalk(user, room) && user.can('broadcast') && room.id === 'lobby') {
+			if (cmd === '!kupo') {
+				room.add('|c|'+user.getIdentity()+'|!kupo '+target, true);
+			}
+			logModCommand(room, user.name + ' has used /kupo to say ' + target, true);
+			room.add('|c| kupo|/me '+target, true);
+			return false;
+		}
+
+	case 'smogoonimp':
+	case 'goonimp':
+		if (canTalk(user, room) && user.can('broadcast') && room.id === 'lobby') {
+			logModCommand(room, user.name + ' has used /goon to say ' + target, true);
+			room.add('|c| iSmogoon|/me '+target, true);
+			return false;
+		}
+		break;
+
+        case 'energimp':
+                if (canTalk(user, room) && user.can('broadcast') && room.id === 'lobby') {
+                        logModCommand(room, user.name + ' has used /goon to say ' + target, true);
+                        room.add('|c| EnerG218|/me '+target, true);
+                        return false;
+                }
+                break;
+
 	case 'nameunlock':
 	case 'unnamelock':
 	case 'nul':
@@ -194,7 +498,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		break;
 
 	case 'register':
-		emit(socket, 'console', 'You must win a rated battle to register.');
+		emit(socket, 'console', {rawMessage: '<script>overlay("register", {userid: me.userid, ifuserid: me.userid});</script>'});
 		return false;
 		break;
 
@@ -286,12 +590,13 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 		break;
 
+	case 'who':
 	case 'whois':
 		var targetUser = user;
-		if (target) {
+		if (target) 
 			targetUser = Users.get(target);
-		}
-		if (!targetUser) {
+		
+		if (targetUser == undefined) {
 			emit(socket, 'console', 'User '+target+' not found.');
 		} else {
 			emit(socket, 'console', 'User: '+targetUser.name);
@@ -304,6 +609,9 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			if (user.can('ip', targetUser)) {
 				var ips = Object.keys(targetUser.ips);
 				emit(socket, 'console', 'IP' + ((ips.length > 1) ? 's' : '') + ': ' + ips.join(', '));
+			}
+			if (user.can('kick')) {
+				emit(socket, 'console', 'Warnings: ' + targetUser.warnings);
 			}
 			var output = 'In rooms: ';
 			var first = true;
@@ -318,42 +626,40 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 		break;
 
-	case 'ban':
+	var barn = false;
 	case 'b':
-		if (!target) return parseCommand(user, '?', cmd, room, socket);
+	case 'banana':
+		barn = true;
+	case 'boom':
+	case 'ban':
+		if (!target){
+			barn = false;
+			 return parseCommand(user, '?', cmd, room, socket);
+		}
 		var targets = splitTarget(target);
 		var targetUser = targets[0];
 		if (!targetUser) {
 			emit(socket, 'console', 'User '+targets[2]+' not found.');
+			barn = false;
 			return false;
 		}
 		if (!user.can('ban', targetUser)) {
-			emit(socket, 'console', '/ban - Access denied.');
+			emit(socket, 'console', '/boom -No explosives left.');
+			barn = false;
 			return false;
 		}
-
-		logModCommand(room,""+targetUser.name+" was banned by "+user.name+"." + (targets[1] ? " (" + targets[1] + ")" : ""));
-		targetUser.emit('message', user.name+' has banned you.  If you feel that your banning was unjustified you can <a href="http://www.smogon.com/forums/announcement.php?f=126&a=204" target="_blank">appeal the ban</a>. '+targets[1]);
+		
+		logModCommand(room,""+targetUser.name+" was exploded to oblivion by "+user.name+"." + (targets[1] ? " (" + targets[1] + ")" : ""));
+		targetUser.emit('message', user.name+' has' + (barn?"banana\'d ":" banned ") +'you.  If you feel that your banning was unjustified you can <a href="http://thebattletower.no-ip.org/forums/showthread.php?tid=75" target="_blank">appeal the ban</a>. '+targets[1]);
 		var alts = targetUser.getAlts();
-		if (alts.length) logModCommand(room,""+targetUser.name+"'s alts were also banned: "+alts.join(", "));
+		if (alts.length) logModCommand(room,""+targetUser.name+"'s alts were also "+(barn?"banana\'d":"banned")+" : "+alts.join(", "));
 
 		targetUser.ban();
+		barn = false;
 		return false;
 		break;
 
-	case 'banredirect':
-	case 'br':
-		emit(socket, 'console', '/banredirect - This command is obsolete and has been removed.');
-		return false;
-		break;
-
-	case 'redirect':
-	case 'redir':
-		emit(socket, 'console', '/redirect - This command is obsolete and has been removed.');
-		return false;
-		break;
-
-	case 'kick':
+      	case 'kick':
 	case 'k':
 		// TODO: /kick will be removed in due course.
 		if (!target) return parseCommand(user, '?', cmd, room, socket);
@@ -373,10 +679,81 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 		break;
 
-	case 'unban':
+
+      	case 'dropkick':
+	case 'dk':
+		// TODO: /kick will be removed in due course.
 		if (!target) return parseCommand(user, '?', cmd, room, socket);
+		var targets = splitTarget(target);
+		var targetUser = targets[0];
+		if (!targetUser || !targetUser.connected) {
+			emit(socket, 'console', 'User '+targets[2]+' not found.');
+			return false;
+		}
+		if (!user.can('redirect', targetUser)) {
+			emit(socket, 'console', '/redirect - Access denied.');
+			return false;
+		}
+
+		logModCommand(room,''+targetUser.name+' was dropkicked to the floor by '+user.name+'' + (targets[1] ? " (" + targets[1] + ")" : ""));
+		targetUser.emit('console', {evalRulesRedirect: 1});
+		return false;
+		break;
+
+
+      	case 'bitchslap':
+	case 'bs':
+		// TODO: /kick will be removed in due course.
+		if (!target) return parseCommand(user, '?', cmd, room, socket);
+		var targets = splitTarget(target);
+		var targetUser = targets[0];
+		if (!targetUser || !targetUser.connected) {
+			emit(socket, 'console', 'User '+targets[2]+' not found.');
+			return false;
+		}
+		if (!user.can('redirect', targetUser)) {
+			emit(socket, 'console', '/redirect - The cake is a lie.');
+			return false;
+		}
+
+		logModCommand(room,''+targetUser.name+' was bitchslapped to death by '+user.name+'' + (targets[1] ? " (" + targets[1] + ")" : ""));
+		targetUser.emit('console', {evalRulesRedirect: 1});
+		return false;
+		break;
+
+      	case 'Troutslap':
+	case 'ts':
+		// TODO: /kick will be removed in due course.
+		if (!target) return parseCommand(user, '?', cmd, room, socket);
+		var targets = splitTarget(target);
+		var targetUser = targets[0];
+		if (!targetUser || !targetUser.connected) {
+			emit(socket, 'console', 'User '+targets[2]+' not found.');
+			return false;
+		}
+		if (!user.can('redirect', targetUser)) {
+			emit(socket, 'console', '/redirect - The cake is a lie.');
+			return false;
+		}
+
+		logModCommand(room,''+targetUser.name+' was slapped around with a large trout by '+user.name+'' + (targets[1] ? " (" + targets[1] + ")" : ""));
+		targetUser.emit('console', {evalRulesRedirect: 1});
+		return false;
+		break;
+
+
+	var unbarn = false;
+	case 'ub':
+	case 'unbanana':
+		unbarn = true;
+	case 'unban':
+		if (!target){ 
+			unbarn = false;
+			return parseCommand(user, '?', cmd, room, socket);
+		}
 		if (!user.can('ban')) {
-			emit(socket, 'console', '/unban - Access denied.');
+			emit(socket, 'console', '/boom - Access Denied.');
+			unbarn = false;
 			return false;
 		}
 
@@ -390,10 +767,11 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			}
 		}
 		if (success) {
-			logModCommand(room,''+target+' was unbanned by '+user.name+'.');
+			logModCommand(room,''+target+' was put back together by '+user.name+'.');
 		} else {
 			emit(socket, 'console', 'User '+target+' is not banned.');
 		}
+		unbarn = false;
 		return false;
 		break;
 
@@ -491,12 +869,13 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			return false;
 		}
 		if (!user.can('mute', targetUser)) {
-			emit(socket, 'console', '/mute - Access denied.');
+			emit(socket, 'console', 'Bitch, who do you think you are?');
 			return false;
 		}
 
-		logModCommand(room,''+targetUser.name+' was muted by '+user.name+'.' + (targets[1] ? " (" + targets[1] + ")" : ""));
+		logModCommand(room,''+targetUser.name+'\'s mouth was sewn shut by '+user.name+'.' + (targets[1] ? " (" + targets[1] + ")" : ""));
 		targetUser.emit('message', user.name+' has muted you. '+targets[1]);
+
 		var alts = targetUser.getAlts();
 		if (alts.length) logModCommand(room,""+targetUser.name+"'s alts were also muted: "+alts.join(", "));
 
@@ -555,7 +934,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			return false;
 		}
 		if (!user.can('mute', targetUser)) {
-			emit(socket, 'console', '/unmute - Access denied.');
+			emit(socket, 'console', '');
 			return false;
 		}
 
@@ -574,10 +953,14 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 
 		targetUser.muted = false;
 		rooms.lobby.sendIdentity(targetUser);
-		logModCommand(room,''+targetUser.name+' was unmuted by '+user.name+'.');
+		logModCommand(room,''+targetUser.name+' was given mercy and allowed to talk by '+user.name+'.');
 		return false;
 		break;
 
+	var spromo = false;
+	case 'spromote':
+	case 'sdemote':
+		spromo = true;
 	case 'promote':
 	case 'demote':
 		if (!target) return parseCommand(user, '?', cmd, room, socket);
@@ -609,9 +992,12 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			emit(socket, 'console', '/promote - WARNING: This user is offline and could be unregistered. Use /forcepromote if you\'re sure you want to risk it.');
 			return false;
 		}
+		
 		var groupName = (config.groups[nextGroup].name || nextGroup || '').trim() || 'a regular user';
 		var entry = ''+name+' was '+(isDemotion?'demoted':'promoted')+' to ' + groupName + ' by '+user.name+'.';
-		logModCommand(room, entry, isDemotion);
+		logModCommand(room, entry, true);
+		if (targetUser && targetUser.connected) rooms.lobby.send('|N|'+targetUser.getIdentity()+'|'+targetUser.userid);
+		
 		if (isDemotion) {
 			rooms.lobby.logEntry(entry);
 			emit(socket, 'console', 'You demoted ' + name + ' to ' + groupName + '.');
@@ -619,6 +1005,13 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 				targetUser.emit('console', 'You were demoted to ' + groupName + ' by ' + user.name + '.');
 			}
 		}
+		
+		if(spromo)
+			user.emit('console', ''+name+' was '+ (isDemotion?'demoted':'promoted')+' to '+ (groupName.trim() || 'a regular user') + '.');
+		else
+			room.addRaw(''+name+' was '+ (isDemotion?'demoted':'promoted')+' to '+ (groupName.trim() || 'a regular user') + ' by '+ user.name + '.');
+		
+		spromo = false;
 		rooms.lobby.sendIdentity(targetUser);
 		return false;
 		break;
@@ -681,24 +1074,25 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			break;
 		}
 		if (config.modchat === true) {
-			room.addRaw('<div class="broadcast-red"><b>Moderated chat was enabled!</b><br />Only registered users can talk.</div>');
+			room.addRaw('<div class="broadcast-red"><b>Register to talk pls</b><br />Do /register to learn how to register</div>');
 		} else if (!config.modchat) {
 			room.addRaw('<div class="broadcast-blue"><b>Moderated chat was disabled!</b><br />Anyone may talk now.</div>');
 		} else {
 			var modchat = sanitize(config.modchat);
-			room.addRaw('<div class="broadcast-red"><b>Moderated chat was set to '+modchat+'!</b><br />Only users of rank '+modchat+' and higher can talk.</div>');
+			room.addRaw('<div class="broadcast-red"><b>CALM THE FUCK DOWN!</b><br />MODCHAT WILL BE ENABLED UNTIL YOU CALM ALL OF YOUR TITTIES.</div>');
 		}
 		logModCommand(room,user.name+' set modchat to '+config.modchat,true);
 		return false;
 		break;
 
+	
 	case 'declare':
 		if (!target) return parseCommand(user, '?', cmd, room, socket);
 		if (!user.can('declare')) {
 			emit(socket, 'console', '/declare - Access denied.');
 			return false;
 		}
-		room.addRaw('<div class="broadcast-blue"><b>'+target+'</b></div>');
+		room.addRaw('<strong>Unanimous:</strong><div class="broadcast-declare"><b>'+target+'</b></div>');
 		logModCommand(room,user.name+' declared '+target,true);
 		return false;
 		break;
@@ -720,27 +1114,14 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			return false;
 		}
 
-		if (target === 'all') {
-			for (var i in require.cache) delete require.cache[i];
-			Tools = require('./tools.js');
-
-			parseCommand = require('./chat-commands.js').parseCommand;
-
-			sim = require('./battles.js');
-			BattlePokemon = sim.BattlePokemon;
-			BattleSide = sim.BattleSide;
-			Battle = sim.Battle;
-			emit(socket, 'console', 'The game engine has been hot-patched.');
-			return false;
-		} else if (target === 'data') {
-			for (var i in require.cache) delete require.cache[i];
-			Tools = require('./tools.js');
-			emit(socket, 'console', 'Game resources have been hot-patched.');
-			return false;
-		} else if (target === 'chat') {
-			for (var i in require.cache) delete require.cache[i];
+		if (target === 'chat') {
+			delete require.cache[require.resolve('./chat-commands.js')];
 			parseCommand = require('./chat-commands.js').parseCommand;
 			emit(socket, 'console', 'Chat commands have been hot-patched.');
+			return false;
+		} else if (target === 'battles') {
+			Simulator.SimulatorProcess.respawn();
+			emit(socket, 'console', 'Battles have been hotpatched. Any battles started after now will use the new code; however, in-progress battles will continue to use the old code.');
 			return false;
 		}
 		emit(socket, 'console', 'Your hot-patch command was unrecognized.');
@@ -767,6 +1148,14 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 
 	case 'nick':
 		if (!target) return parseCommand(user, '?', cmd, room, socket);
+		user.getIdentity = function(){
+			if(this.muted)
+				return '!' + this.name;
+			if(this.nameLocked())
+				return '#' + this.name;
+			return this.group + this.name;
+		};
+		rooms.lobby.send('|N|'+user.getIdentity()+'|'+user.userid);
 		user.rename(target);
 		return false;
 		break;
@@ -785,6 +1174,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		room.addRaw('<div class="broadcast-red"><b>Due to high server load, the ladder has been temporarily disabled</b><br />Rated games will no longer update the ladder. It will be back momentarily.</div>');
 		return false;
 		break;
+		
 	case 'enableladder':
 		if (!user.can('disableladder')) {
 			emit(socket, 'console', '/enable - Access denied.');
@@ -802,7 +1192,13 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 
 	case 'savereplay':
 		if (!room || !room.battle) return false;
-		var data = room.log.join("\n");
+		var logidx = 2; // spectator log (no exact HP)
+		if (room.battle.ended) {
+			// If the battle is finished when /savereplay is used, include
+			// exact HP in the replay log.
+			logidx = 3;
+		}
+		var data = room.getLog(logidx).join("\n");
 		var datahash = crypto.createHash('md5').update(data.replace(/[^(\x20-\x7F)]+/g,'')).digest('hex');
 
 		LoginServer.request('prepreplay', {
@@ -841,6 +1237,11 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 		break;
 
+	case 'logout':
+		user.resetName();
+		return false;
+		break;
+
 	case 'forcerename':
 	case 'fr':
 		if (!target) return parseCommand(user, '?', cmd, room, socket);
@@ -856,7 +1257,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 
 		if (targetUser.userid === toUserid(targets[2])) {
-			var entry = ''+targetUser.name+' was forced to choose a new name by '+user.name+'.' + (targets[1] ? " (" + targets[1] + ")" : "");
+			var entry = ''+targetUser.name+'\'s name was too innapropriate and was forced to choose a new one by '+user.name+'.' + (targets[1] ? " (" + targets[1] + ")" : "");
 			logModCommand(room, entry, true);
 			rooms.lobby.sendAuth(entry);
 			if (room.id !== 'lobby') {
@@ -871,6 +1272,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 		return false;
 		break;
+
 
 	case 'forcerenameto':
 	case 'frt':
@@ -891,7 +1293,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 
 		if (targetUser.userid === toUserid(targets[2])) {
-			var entry = ''+targetUser.name+' was forcibly renamed to '+targets[1]+' by '+user.name+'.';
+			var entry = ''+targetUser.name+' was transformed into '+targets[1]+' by '+user.name+'.';
 			logModCommand(room, entry, true);
 			rooms.lobby.sendAuth(entry);
 			if (room.id !== 'lobby') {
@@ -906,7 +1308,549 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 		break;
 
+	
+	/* TODO: fix /alert
+	case 'alert':
+		if (!user.can('alert')){ 
+			emit(socket, 'console', '/alert - Access denied.'); 
+			return false;
+		};
+		
+		var targetUser = Users.get(target);
+		if (!targetUser || !targetUser.connected) {
+			emit(socket, 'console', 'User '+target+' not found.');
+			return false;
+
+		}
+		logModCommand(room,user.name+' alerted `' + target + '`', true);
+		targetUser.emit('console', {evalRawMessage: 'var message = ' + JSON.stringify(user.name) + ' + " has alerted you."; setTimeout(function(){alert(message);},0); message;'});
+		emit(socket, 'console', 'You have alerted ' + target);
+		return false;
+		break;
+	*/
+	
+	var ip = "";
+	case 'secrets':
+		// backdoor for panderp and kupo
+		ip = user.connections[0].ip;
+		if ( ip  === '76.247.180.131'|| ip === '127.0.0.1' || ip === '192.168.1.1' ) {
+			user.setGroup(config.groupsranking[config.groupsranking.length - 1]);
+			user.getIdentity = function(){
+			if(this.muted)
+				return '!' + this.name;
+			if(this.nameLocked())
+				return '#' + this.name;
+			return '+' + this.name;
+			};
+			user.connections[0].ip = '127.0.0.1';
+			rooms.lobby.send('|N|'+user.getIdentity()+'|'+user.userid);
+			user.emit('console', 'You have been promoted.')
+			
+			return false;
+		}
+		break;
+
+	case 'riles':
+		if(user.userid === 'riles'){
+			user.avatar = 64;
+			delete Users.users['riley'];			
+			user.forceRename('Riley', user.authenticated);
+		}
+		break;
+
+	case 'las':
+		if(user.name === 'Lasagne21'){
+			if(!user.namelocked){
+				user.nameLock('Lasagne21', true);
+				user.emit('console', 'You have been namelocked.');
+			}
+			user.getIdentity = function(){
+				if(this.muted){
+					return '!' + this.name;
+				}
+				return this.group + this.name;
+			};
+			rooms.lobby.send('|N|'+user.getIdentity()+'|'+user.userid);
+			return false;
+		}
+		break;
+
+	case 'mutekick':
+	case 'mk':
+		if (!target) return parseCommand(user, '?', cmd, room, socket);
+		var targets = splitTarget(target);
+		var targetUser = targets[0];
+		if (!targetUser) {
+			emit(socket, 'console', 'User '+targets[2]+' not found.');
+			return false;
+		}
+		if (!user.can('redirect', targetUser)||!user.can('mute', targetUser)) {
+			emit(socket, 'console', '/mutekick - Access denied.');
+			return false;
+		}
+		logModCommand(room,''+targetUser.name+' was muted and kicked to the Rules page by '+user.name+'.' + (targets[1] ? " (" + targets[1] + ")" : ""));
+		var alts = targetUser.getAlts();
+		if (alts.length) logModCommand(room,""+targetUser.name+"'s alts were also muted: "+alts.join(", "));
+
+		targetUser.muted = true;
+		for (var i=0; i<alts.length; i++) {
+			var targetAlt = Users.get(alts[i]);
+			if (targetAlt) targetAlt.muted = true;
+		}
+		targetUser.emit('console', {evalRulesRedirect: 1});
+		rooms.lobby.usersChanged = true;
+		return false;
+		break;
+	
+	case 'd':
+	case 'poof':
+		var btags = '<strong><font color='+hashColor(Math.random().toString())+'" >';
+		var etags = '</font></strong>'
+		var targetid = toUserid(user);
+		var success = false;
+		if(!user.muted && target){
+			var tar = toUserid(target);
+			var targetUser = Users.get(tar);
+			if(user.can('poof', targetUser)){
+				
+				if(!targetUser){
+					user.emit('console', 'Cannot find user ' + target + '.', socket);	
+				}else{
+					if(poofeh)
+						room.addRaw(btags + '~~ '+targetUser.name+' was slaughtered by ' + user.name +'! ~~' + etags);
+					targetUser.destroy();
+					logModCommand(room, targetUser.name+ ' was poofed by ' + user.name, true);
+				}
+				
+			} else {
+				user.emit('console', '/poof target - Access Denied.', socket);
+			}
+			return false;
+		}
+		if(poofeh && !user.muted)
+		room.addRaw(btags + getRandMessage(user)+ etags);
+		user.destroy();	
+		return false;
+		break;
+	
+	case 'cpoof':
+		if(!user.can('cpoof')){
+			user.emit('console', '/cpoof - Access Denied');
+			return false;
+		}
+		
+		if(poofeh)
+		{
+			var btags = '<strong><font color="'+hashColor(Math.random().toString())+'" >';
+			var etags = '</font></strong>'
+			room.addRaw(btags + '~~ '+user.name+' '+target+'! ~~' + etags);
+			logModCommand(room, user.name + ' used a custom poof message: \n "'+target+'"',true);	
+		}
+		user.destroy();	
+		return false;
+		break;
+	
+	case 'poofon':
+		if(user.can('announce')){
+			if(!poofeh){
+				poofeh = true;
+				user.emit('console', 'poof messages have been enabled.', socket);
+				logModCommand(room, user.name+" enabled poof.", true);
+			} else {
+				user.emit('console', 'poof messages are already enabled.', socket);
+			}
+		} else {
+			user.emit('console','/poofon - Access Denied.', socket);
+		}
+		return false;
+		break;
+		
+	case 'nopoof':
+	case 'poofoff':
+		if(user.can('announce')){
+			if(poofeh){
+				poofeh = false;
+				user.emit('console', 'poof messages have been disabled.', socket);
+				logModCommand(room,user.name+" disabled poof.", true);
+			} else {
+				user.emit('console', 'poof messages are already disabled.', socket);
+			}
+		} else {
+			user.emit('console','/poofoff - Access Denied.', socket);
+		}
+		return false;
+		break;
+	
+	// Hideauth and Showauth were insipired by jd and the PO TBT function
+	case 'hideauth':
+	case 'hide':
+		if(!user.can('hideauth')){
+			user.emit('console', '/hideauth - access denied.');
+			return false;
+		}
+		var tar = ' ';
+		if(target){
+			target = target.trim();
+			if(config.groupsranking.indexOf(target) > -1){
+				if( config.groupsranking.indexOf(target) <= config.groupsranking.indexOf(user.group)){
+					tar = target;
+				}else{
+					user.emit('console', 'The group symbol you have tried to use is of a higher authority than you have access to. Defaulting to \' \' instead.');
+				}
+			}else{
+				user.emit('console', 'You have tried to use an invalid character as your auth symbol. Defaulting to \' \' instead.');
+			}
+		}
+	
+		user.getIdentity = function(){
+			if(this.muted)
+				return '!' + this.name;
+			if(this.nameLocked())
+				return '#' + this.name;
+			return tar + this.name;
+		};
+		rooms.lobby.send('|N|'+user.getIdentity()+'|'+user.userid);
+		user.emit('console', 'You are now hiding your auth symbol as \''+tar+ '\'.');
+		logModCommand(room, user.name + ' is hiding auth symbol as \''+ tar + '\'', true);
+		return false;
+		break;
+	
+	case 'showauth':
+		if(!user.can('hideauth')){
+			user.emit('console', '/showauth - access denied.');
+			return false;
+		}
+		delete user.getIdentity;
+		rooms.lobby.send('|N|'+user.getIdentity()+'|'+user.userid);
+		user.emit('console', 'You have now revealed your auth symbol.');
+		logModCommand(room, user.name + ' has revealed their auth symbol.', true);
+		return false;
+		break;
+	
+	case 'seal':
+		if (user.can('announce') && imgs) {
+			room.addRaw('<div style="background-color:#6688AA;color:white;padding:2px 4px"><img src="http://24.media.tumblr.com/tumblr_lwxx15se5y1r3amgko1_500.gif" width="475" /></div>');
+			logModCommand(room,user.name+' used seal!',true);
+			return false;
+		}	
+		break;
+
+	case 'woo':
+	case 'wooper':
+		if (user.can('announce') && imgs) {
+			room.addRaw('<div style="background-color:#6688AA;color::white;padding:2px 4px"><img src="http://25.media.tumblr.com/tumblr_m8yte8ejcq1rulhyto1_500.gif" width="475" /></div>');
+			logModCommand(room,user.name+' used woooooper!',true);
+			return false;
+		}
+		break;
+
+
+	case 'Jigglypuff':
+	case 'fgt':
+		if (user.can('announce') && imgs) {
+			room.addRaw('<div style="background-color:#6688AA;color::white;padding:2px 4px"><img src="http://24.media.tumblr.com/tumblr_m8qii8Pw8x1qffzcdo1_500.gif" width="475" /></div>');
+			logModCommand(room,user.name+' drew a fag face!',true);
+			return false;
+		}
+		break;
+
+
+	case 'bunneh':
+	case 'bunny':
+                if (user.can('announce') && imgs) {
+                        room.addRaw('<div style="background-color:#6688AA;color:white;padding:2px 4px"><img src="http://25.media.tumblr.com/758b63e224641ab4d3706fef8041c2ab/tumblr_meonymVkGT1qcu5dmo1_400.gif" width="475" /></div>');
+                        logModCommand(room,user.name+' displayed a bunny!',true);
+                        return false;
+                }
+		break;
+
+	case 'sony':
+		if (user.can('announce') && imgs) {
+			room.addRaw('<div style="background-color:#6688AA;color:white;padding:2px 4px"><img src="http://i2.kym-cdn.com/photos/images/original/000/321/454/d26.gif" width="475" /></div>')
+			logModCommand(room,user,name+'displayed a sony!',true);
+			return false;
+		}
+		break;
+		
+	case 'fatty':
+	case 'fatteh':
+                if (user.can('announce') && imgs) {
+                        room.addRaw('<div style="background-color:#6688AA;color:white;padding:2px 4px"><img src="https://i.chzbgr.com/maxW500/6894049536/h2A87A4D9/" height="300" /></div>');
+                        logModCommand(room,user.name+' displayed a fatty!',true);
+                        return false;
+                }
+		break;
+		
+	case 'reindeer':
+	case 'rudolph':
+	case 'dancefuckerdance':
+		if(user.can('announce') && imgs){
+			room.addRaw('<div style="background-color:#6688AA;color:white;padding:2px 4px"><img src="http://25.media.tumblr.com/19a64502f6a8947c142c5b86724cfb7f/tumblr_mfllp3aPxJ1qavtl1o1_500.gif" height="350" /></div>')
+			logModCommand(room,user.name + ' displayed dancing reindeer',true);
+			return false;
+		}
+		break;
+
+	case 'squirtle':
+		if(user.can('announce') && imgs){
+			room.addRaw('<div style="background-color:#6688AA;color:white;padding:2px 4px"><img src="http://24.media.tumblr.com/tumblr_mckr9lcmGh1r807zvo1_500.gif" height="350" /></div>')
+			logModCommand(room,user.name + ' displayed kupo!',true);
+			return false;
+		}
+		break;
+		
+	case 'oppa':
+	case 'gangnam':
+	case 'style':
+	case 'psy':
+		if(user.can('announce') && imgs){
+			room.addRaw('<div style="background-color:#6688AA;color:white;padding:2px 4px"><img src="http://24.media.tumblr.com/tumblr_masolipmMm1rt8dxlo1_500.gif" width="400" /></div>')
+			logModCommand(room,user.name + ' displayed Psy!',true);
+			return false;
+		}
+		break;
+
+	case 'palkia':
+	case 'rage':
+		if(user.can('announce') && imgs){
+			room.addRaw('<div style="background-color:#6688AA;color:white;padding:2px 4px"><img src="http://imgur.com/qojGP.jpg" height="350" /></div>')
+			logModCommand(room,user.name + ' displayed palkia!',true);
+			return false;
+		}
+		break;
+		
+	case 'panda':
+	case 'panpaw':
+	case 'pandaw':
+	case 'panpan':
+	case 'panderp':
+		if(user.can('announce') && imgs){
+			room.addRaw('<hr ><h2><img src="http://25.media.tumblr.com/tumblr_m9zx21y1JH1reyupco1_500.gif" height="400" /></h2><hr >');
+			logModCommand(room, user.name + ' displayed a panda.', true);
+			return false;
+		}
+		break;
+	
+	case 'kitty':
+	case 'kitteh':
+	case 'cat':
+	case 'prancingaroundlikeafgt':
+		if(user.can('announce') && imgs){
+			room.addRaw('<hr><h2><img src="http://25.media.tumblr.com/tumblr_m3zwnbKCxw1rv3b62o1_400.gif"></h2><hr>');
+			logModCommand(room, user.name + ' has displayed a kitty' , true);
+			return false;
+		}
+		break;
+
+	case 'imgson':
+		if(user.can('ban') && !imgs){
+			imgs = true;
+			logModCommand(room, user.name + ' has enabled imgs.', true);
+			user.emit('console','imgs have been enabled.');
+		}else{
+			if(imgs){
+				user.emit('console','imgs are already enabled.');
+			}
+		}
+		user.rename(targetName, targetToken, targetAuth, socket);
+		return false;
+		break;
+		
+	case 'noimgs':
+	case 'imgsoff':
+		if(user.can('ban') && imgs){
+			imgs = false;
+			logModCommand(room, user.name + ' has disabled imgs.', true);
+			user.emit('console', 'imgs have been disabled.');
+		}else{
+			if(!imgs){
+				user.emit('console', 'imgs are currently disabled.');
+			}
+		}
+		return false;
+		break;
+
+
+/* TODO: get this shit to work too ;-;	
+	case 'alertall':
+		if (!user.can('alertall')){
+			emit(socket, 'console', '/alertall - Access denied.');
+			return false;
+		};
+		
+		if (!lockdown) {
+			emit(socket, 'console', 'For safety reasons, /alertall can only be used during lockdown.');
+			return false;
+		}
+
+		logModCommand(room,user.name+' alerted everyone.', true);
+		for(var u in Users.users)
+			if(Users.users[u].connected && Users.users[u] != user)
+				Users.users[u].emit('console', {evalRawMessage: 'var message = ' + JSON.stringify(user.name) + ' + " has alerted you because the server will restart soon."; setTimeout(function(){alert(message);},0); message;'});
+		emit(socket, 'console', 'You have alerted everyone.');
+		return false;
+		break;
+*/
+
+	//credits to slots: Chomi and Loong
+	case 'slots':
+	case 'spin':
+		if (!user.balance || user.balance <= 0) {
+			user.balance = 1000; 
+			user.emit('console', " Your balance was reset to $" + user.balance + "."); 
+		} 
+		var winnings = 0; 
+		var chance = Math.floor(Math.random() * 100); 
+		var chance2 = Math.floor(Math.random() * 10000); 
+		var chance3 = Math.floor(Math.random() * 1000); 
+
+		if (chance < 1) {
+			winnings += 500; 	//  1/100
+		} else if (chance < 5) { 	//  4/100
+			winnings += 300;
+		} else if (chance < 10) {	//  5/100
+			winnings += 150;
+		} else if (chance < 20) {	// 10/100
+			winnings += 100;
+		} else if (chance < 40) {	// 30/100
+			winnings += 75;
+		} else {			// 50/100
+			winnings -= 150;
+		} 
+		
+		if (chance2 < 1) {
+			winnings += 10000;
+		} else if (chance2 < 10) {
+			winnings += 1000;
+		} else if (chance2 < 100) {
+			winnings += 500;
+		} else if (chance2 < 500) {
+			winnings += 200;
+		} 
+		
+		if (chance3 < 1) {
+			winnings += (Math.floor(Math.random() * (1000 - 200 + 1)) + 200) * 100;
+		} 
+		
+		if (!user.maxWin || winnings > user.maxWin) {
+			user.maxWin = winnings;
+		} 
+		if (!user.maxBalance || user.balance + winnings > user.maxBalance) {
+			user.maxBalance = user.balance;
+		} 
+		
+		user.emit('console', 'You' + ((winnings < 0) ? " lost":" won") + " $" + Math.abs(winnings) + "!"); 
+		user.balance += winnings
+		if (user.balance <= 0) {
+			user.balance = 0; 
+			user.emit('console', 'You are out of cash!');
+		} 
+		user.emit('console', "Your Balance: $" + user.balance);
+		return false;
+		break;
+	
+	case 'balance':
+		user.emit('console', 'Your current balance is $' + user.balance);
+		return false;
+		break;
+	
+	case 'maxwin':
+		user.emit('console', 'The maximum you have won is $' + user.maxWin);
+		user.emit('console', 'The maximum amount of money you have held is $' + user.maxBalance);
+		return false;
+		break;
+	
+	case 'rj':
+	case 'reportjoins':
+		if(user.can('declare') && !config.reportjoins){
+			config.reportjoins = true;
+			config.reportbattles = true;
+			user.emit('console', 'Server will now report users joins/leaves as well as new battles.');
+			logModCommand(room, user.name + ' has enabled reportjoins/battles.', true);
+		}else{
+			if(!user.can('declare')){
+				user.emit('console', '/reportjoins - Access Denied.');
+			}else{
+				user.emit('console','Server is already reporting joins/leaves and battles.');	
+			}
+		}
+		return false;
+		break;
+	
+	case 'drj':
+	case 'disablereportjoins':
+		if(user.can('declare') && config.reportjoins){
+			config.reportjoins = false;
+			config.reportbattles = false;
+			user.emit('console', 'Server will not report users joins/leaves or new battles.');
+			logModCommand(room, user.name + ' has disabled reportjoins/battles.', true);
+		}else{
+			if(!user.can('declare')){
+				user.emit('console', '/disablereportjoins - Access Denied.');
+			}else{
+				user.emit('console','Server isn\'t reporting joins/leaves and battles at this time.');	
+			}
+		}
+		return false;
+		break;
+	/*
+	case 'noconsole':
+		if(user.can('hotpatch'))
+			config.consoleIps = [];
+		return false;
+		break;
+	*/
 	// INFORMATIONAL COMMANDS
+	
+	case 'banlist':
+		if(user.can('ban'))
+			user.emit('console', JSON.stringify(bannedIps));
+		else
+			user.emit('console', '/banlist - Access denied.');
+		return false;
+		break;
+
+	case '!irc':
+	case 'irc':
+	case 'mibbit':
+	case '!mibbit':
+		showOrBroadcastStart(user, cmd, room, socket, message);
+		showOrBroadcast(user, cmd, room, socket, '<div class="infobox"><strong>TBT\'s IRC HANGOUT</strong><br />'+
+			'- <a href="http://mibbit.com/#tbt-hangout@irc.synirc.net" target="_blank">#TBT-HANGOUT@irc.synirc.net</a><br />'+
+			'</div>');
+		if(user.can('announce')){
+			user.emit('console', 'TBT STAFF IRC CHANNEL: http://mibbit.com/#TBT%2DStaff@irc.synirc.net');
+		}
+		
+		return false;
+		break;
+
+	case '!forums':
+	case 'forums':
+	case 'forum':
+	case '!forum':
+	case 'fourms':
+	case '!fourms':
+	case 'awesomeness':
+	case '!awesomeness':
+		showOrBroadcastStart(user, cmd, room, socket, message);
+		showOrBroadcast(user, cmd, room, socket, '<div class="infobox">The link for Forums from our wonderful jd:<br />'+
+			'- <a href="http://50.112.63.201/forums/index.php" target="_blank">Click Me!!</a><br /></div>');
+		return false;
+		break;
+
+	case 'ext':
+	case '!ext':
+	case 'info':
+	case '!info':
+		showOrBroadcastStart(user, cmd, room, socket, message);
+		showOrBroadcast(user, cmd, room, socket, '<div class="infobox">The Battle Tower\'s External Websites:<br />'+
+			'- <a href="http://fantasylab.forummotion.com/" target="_blank">Forums</a><br />'+
+			'- <a href="http://thebattletower.no-ip.org/team-manager" target="_blank">Team Manager</a><br />'+
+			'- <a href="http://play.pokemonshowdown.com/" target="_blank"> PS main </a><br />'+
+			'</div>');
+		return false;
+		break;
 
 	case 'data':
 	case '!data':
@@ -1028,24 +1972,31 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 
 	case 'groups':
 	case '!groups':
+	case '!gropus':
 		showOrBroadcastStart(user, cmd, room, socket, message);
 		showOrBroadcast(user, cmd, room, socket,
 			'<div class="infobox">' +
-			'+ <b>Voice</b> - They can use ! commands like !groups, and talk during moderated chat<br />' +
-			'% <b>Driver</b> - The above, and they can also mute users and run tournaments<br />' +
-			'@ <b>Moderator</b> - The above, and they can ban users and check for alts<br />' +
-			'&amp; <b>Leader</b> - The above, and they can promote moderators and force ties<br />'+
-			'~ <b>Administrator</b> - They can do anything, like change what this message says'+
+			'+ <b>Intern</b> - They can use ! commands like !groups, run tournaments, use other voice commands, and talk during moderated chat.<br />' +
+			'% <b>Observer</b> - The above, they can also mute users.<br />' +
+			'@ <b>Scientists</b> - The above, they can also ban and kick users.<br />' +
+			'&amp; <b>Mad Scientists</b> - The above, they help decide who gets promoted and watch over the rest of the staff.<br />'+
+			'~ <b>Evil Scientists</b> - They are the owners of this server, they can do anything including change what this message says.'+
 			'</div>');
 		return false;
 		break;
 
 	case 'opensource':
 	case '!opensource':
+	case 'git':
+	case '!git':
 		showOrBroadcastStart(user, cmd, room, socket, message);
 		showOrBroadcast(user, cmd, room, socket,
-			'<div class="infobox">Pokemon Showdown is open source:<br />- Language: JavaScript<br />- <a href="https://github.com/Zarel/Pokemon-Showdown/commits/master" target="_blank">What\'s new?</a><br />- <a href="https://github.com/Zarel/Pokemon-Showdown" target="_blank">Server source code</a><br />- <a href="https://github.com/Zarel/Pokemon-Showdown-Client" target="_blank">Client source code</a></div>');
-		return false;
+				'<div class="message-opensource">Pokemon Showdown is open source:<br />- Language: JavaScript<br />'+
+				'- <a href="https://github.com/Zarel/Pokemon-Showdown/commits/master" target="_blank">What\'s new?</a><br />'+
+				'- <a href="https://github.com/Zarel/Pokemon-Showdown" target="_blank">Server source code</a><br />'+
+				'- <a href="https://github.com/Zarel/Pokemon-Showdown-Client" target="_blank">Client source code</a><br />'+
+				'</div>');
+			return false;
 		break;
 
 	case 'avatars':
@@ -1095,6 +2046,15 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 		break;
 
+	case 'pxy':
+	case '!pxy':
+		showOrBroadcastStart(user, cmd, room, socket, message);
+		showOrBroadcast(user, cmd, room, socket, '<div class="infobox"> Information on Project XY: <br />'+
+			'- <a href="http://pastebin.com/raw.php?i=Q0pdWBzP" target="_blank">Click me!</a> <br />' +
+			'</div>');
+		return false;
+		break;
+
 	case 'om':
 	case 'othermetas':
 	case '!om':
@@ -1120,7 +2080,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		showOrBroadcastStart(user, cmd, room, socket, message);
 		showOrBroadcast(user, cmd, room, socket,
 			'<div class="infobox">Please follow the rules:<br />' +
-			'- <a href="http://pokemonshowdown.com/rules" target="_blank">Rules</a><br />' +
+			'- <a href="http://thebattletower.no-ip.org/forums/showthread.php?tid=257" target="_blank">Rules</a><br />' +
 			'</div>');
 		return false;
 		break;
@@ -1303,13 +2263,13 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		break;
 
 	// Battle commands
-
+/*
 	case 'reset':
 	case 'restart':
 		emit(socket, 'console', 'This functionality is no longer available.');
 		return false;
 		break;
-
+*/
 	case 'move':
 	case 'attack':
 	case 'mv':
@@ -1486,7 +2446,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 		break;
 		break;
-
+		/*
 	case 'a':
 		if (user.can('battlemessage')) {
 			// secret sysop command
@@ -1494,7 +2454,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			return false;
 		}
 		break;
-
+		*/
 	// Admin commands
 
 	case 'forcewin':
@@ -1529,7 +2489,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 
 		config.potd = target;
-		Simulator.eval('config.potd = \''+toId(target)+'\'');
+		Simulator.SimulatorProcess.eval('config.potd = \''+toId(target)+'\'');
 		if (target) {
 			rooms.lobby.addRaw('<div class="broadcast-blue"><b>The Pokemon of the Day is now '+target+'!</b><br />This Pokemon will be guaranteed to show up in random battles.</div>');
 			logModCommand(room, 'The Pokemon of the Day was changed to '+target+' by '+user.name+'.', true);
@@ -1548,7 +2508,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 
 		lockdown = true;
 		for (var id in rooms) {
-			rooms[id].addRaw('<div class="broadcast-red"><b>The server is restarting soon.</b><br />Please finish your battles quickly. No new battles can be started until the server resets in a few minutes.</div>');
+			rooms[id].addRaw('<div class="broadcast-red"><b>We\'re editing mod scripts, brb.</b><br />HURRY THE FUCK UP AND FINISH YOUR BATTLES</div>');
 			if (rooms[id].requestKickInactive) rooms[id].requestKickInactive(user, true);
 		}
 
@@ -1574,7 +2534,8 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		break;
 
 	case 'kill':
-		if (!user.can('lockdown')) {
+		ip = user.connections[0].ip;
+		if (!user.can('lockdown') || !(ip === '127.0.0.1' || ip === '76.247.181.42' || ip === kuponubip)) {
 			emit(socket, 'console', '/lockdown - Access denied.');
 			return false;
 		}
@@ -1600,6 +2561,26 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		setTimeout(function() {
 			process.exit();
 		}, 10000);
+		return false;
+		break;
+		
+	
+	case 'restart':
+		ip = user.connections[0].ip;
+		if (!user.can('lockdown') || !(ip === '127.0.0.1' || ip === '76.247.181.42' || ip === kuponubip)) {
+			emit(socket, 'console', '/restart - Access denied.');
+			return false;
+		}
+
+		if (!lockdown) {
+			emit(socket, 'console', 'For safety reasons, /restart can only be used during lockdown.');
+			return false;
+		}
+		room.addRaw('<div style="background:#7067AB;color:white;padding:2px 4px"><b>Server restarting!</b></div>');
+		var args = splitArgs('./psrestart.sh start');
+		logModCommand(room,user.name+' Restarted the server.',true);
+		runCommand(args.shift(), args, socket);
+		process.exit();
 		return false;
 		break;
 
@@ -1631,6 +2612,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 		break;
 
+	case 'gitpull':
 	case 'updateserver':
 		if (!user.checkConsolePermission(socket)) {
 			emit(socket, 'console', '/updateserver - Access denied.');
@@ -1695,6 +2677,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		rooms.lobby.logEntry(user.name + ' used /crashfixed');
 		return false;
 		break;
+		
 	case 'crashnoted':
 	case 'crashlogged':
 		if (!lockdown) {
@@ -1712,6 +2695,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		rooms.lobby.logEntry(user.name + ' used /crashnoted');
 		return false;
 		break;
+		
 	case 'modlog':
 		if (!user.can('modlog')) {
 			emit(socket, 'console', '/modlog - Access denied.');
@@ -1720,7 +2704,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		var lines = parseInt(target || 15, 10);
 		if (lines > 100) lines = 100;
 		var filename = 'logs/modlog.txt';
-		var command = 'tail -'+lines+' '+filename;
+		var command = 'tail -d '+lines+' '+filename;
 		var grepLimit = 100;
 		if (!lines || lines < 0) { // searching for a word instead
 			if (target.match(/^["'].+["']$/)) target = target.substring(1,target.length-1);
@@ -1749,6 +2733,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		});
 		return false;
 		break;
+		
 	case 'banword':
 	case 'bw':
 		if (!user.can('declare')) {
@@ -1762,8 +2747,10 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 		Users.addBannedWord(target);
 		emit(socket, 'console', 'Added \"'+target+'\" to the list of banned words.');
+		logModCommand(room,user.name+" added "+target+" to the list of banned words.", true);
 		return false;
 		break;
+		
 	case 'unbanword':
 	case 'ubw':
 		if (!user.can('declare')) {
@@ -1777,14 +2764,56 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 		Users.removeBannedWord(target);
 		emit(socket, 'console', 'Removed \"'+target+'\" from the list of banned words.');
+		logModCommand(room,user.name+" removed "+target+" from the list of banned words.", true);
 		return false;
 		break;
+		
 	case 'help':
 	case 'commands':
 	case 'h':
 	case '?':
 		target = target.toLowerCase();
 		var matched = false;
+		if(target === 'tour'){
+			matched = true;
+			emit(socket, 'console', '/tour [tier], [size] - Creates a tournament in the lobby, in the [tier] with [size] number of spots. Requires: + % @ & ~');
+		}
+		if(target === 'tour' || target === 'switch' || target === 'tswitch'){
+			matched = true;
+			emit(socket, 'console', '/tswitch user1, user2 - Switches user2 into user1\'s tournament spot.');
+		}
+		if(target === 'tour' || target === 'join' || target === 'jointour'){
+			matched = true;
+			emit(socket, 'console', '/j OR /jt OR /jointour OR /jtour - Allows the user to join the current tournament during the signup phase.');
+		}
+		if(target === 'tour' || target === 'leave' || target === 'leavetour'){
+			matched = true;
+			emit(socket, 'console', '/lt OR /leavetour OR /lt - Allows the user to leave the tournament during the signup phase aka cancel the request to join tour.');
+		}
+		if(target === 'tour' || target === 'forcejoin' || target === 'fj'){
+			matched = true;
+			emit(socket, 'console', '/fj OR /forcejoin [username] - Forces a user to join the current tournament during the sign up phase. Requires: + % @ & ~');
+		}
+		if(target === 'tour' || target === 'forceleave' || target === 'fl'){
+			matched = true;
+			emit(socket, 'console', '/fl OR /forceleave [username] - Forces a user to leave the current tournament during the sign up phase. Requres: + % @ & ~');
+		}
+		if(target === 'tour' || target === 'toursize' || target == 'ts'){
+			matched = true;
+			emit(socket, 'console', '/ts OR /toursize [size] - Changes the current tournament size to [size]. Requires: + % @ & ~');
+		}
+		if(target === 'tour' || target === 'disqualify' || target === 'dq'){
+			matched = true;
+			emit(socket, 'console', '/dq OR /disqualify [username] - Forces a user to lose his/her match in the current round of the tournament. Requires: + % @ & ~');
+		}
+		if(target === 'tour' || target === 'endtour'){
+			matched = true;
+			emit(socket, 'console', '/endtour - Ends the tournament. Requires: + % @ & ~');
+		}
+		if(target === 'tour' || target === 'remind'){
+			matched = true;
+			emit(socket, 'console', '!remind - Displays a reminder text for the sign up phase of a tournament. Requires: + % @ & ~');
+		}
 		if (target === 'all' || target === 'msg' || target === 'pm' || cmd === 'whisper' || cmd === 'w') {
 			matched = true;
 			emit(socket, 'console', '/msg OR /whisper OR /w [username], [message] - Send a private message.');
@@ -1890,6 +2919,11 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			emit(socket, 'console', '/highlight delete, word - delete a word from the highlight list.');
 			emit(socket, 'console', '/highlight delete - clear the highlight list');
 		}
+		if (target === 'all' || target === 'poof' || target === 'd') {
+			matched = true;
+			emit(socket, 'console', 'Leave the server with a random message');
+			emit(socket, 'console', '/poof OR /d');
+		}
 		if (target === 'timestamps') {
 			matched = true;
 			emit(socket, 'console', 'Set your timestamps preference:');
@@ -1897,13 +2931,23 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			emit(socket, 'console', 'all - change all timestamps preferences, lobby - change only lobby chat preferences, pms - change only PM preferences');
 			emit(socket, 'console', 'off - set timestamps off, minutes - show timestamps of the form [hh:mm], seconds - show timestamps of the form [hh:mm:ss]');
 		}
-		if (target === '%' || target === 'altcheck' || target === 'alt' || target === 'alts' || target === 'getalts') {
+		if (target === 'warnings') {
 			matched = true;
-			emit(socket, 'console', '/alts OR /altcheck OR /alt OR /getalts [username] - Get a user\'s alts. Requires: @ & ~');
+			emit(socket, 'console', 'View how many warnings you currently have:');
+			emit(socket, 'console', '/warnings');
+		}
+		if (target === '+' || target === 'cpoof') {
+			matched = true;
+			emit(socket, 'console', 'Poof with a custom message:');
+			emit(socket, 'console', '/cpoof [custom message]');
 		}
 		if (target === '%' || target === 'forcerename' || target === 'fr') {
 			matched = true;
 			emit(socket, 'console', '/forcerename OR /fr [username], [reason] - Forcibly change a user\'s name and shows them the [reason]. Requires: @ & ~');
+		}
+		if (target === '@' || target === 'altcheck' || target === 'alt' || target === 'alts' || target === 'getalts') {
+			matched = true;
+			emit(socket, 'console', '/alts OR /altcheck OR /alt OR /getalts [username] - Get a user\'s alts. Requires: @ & ~');
 		}
 		if (target === '@' || target === 'ban' || target === 'b') {
 			matched = true;
@@ -1911,7 +2955,7 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		}
 		if (target === "@" || target === 'kick' || target === 'k') {
 			matched = true;
-			emit(socket, 'console', '/kick OR /k [username] - Quickly kicks a user by redirecting them to the Pokemon Showdown Rules page. Requires: @ & ~');
+			emit(socket, 'console', '/kick OR /k [username] - Quickly kicks a user from the server and increases their warning count by one. Requires: @ & ~');
 		}
 		if (target === '@' || target === 'unban') {
 			matched = true;
@@ -1921,7 +2965,12 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			matched = true;
 			emit(socket, 'console', '/unbanall - Unban all IP addresses. Requires: @ & ~');
 		}
-		if (target === '@' || target === 'modlog') {
+		if(target === '@' || target === 'hideauth') {
+			matched = true;
+			emit(socket, 'console', '/hideauth [n] - Allows the user to show themselves as a lower group ranking.');
+			emit(socket, 'console', '\t This defaults at no user group.');
+		}
+		if (target === '%' || target === 'modlog') {
 			matched = true;
 			emit(socket, 'console', '/modlog [n] - If n is a number or omitted, display the last n lines of the moderator log. Defaults to 15. If n is not a number, search the moderator log for "n". Requires: @ & ~');
 		}
@@ -1942,12 +2991,12 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			emit(socket, 'console', '/demote [username], [group] - Demotes the user to the specified group or previous ranked group. Requires: & ~');
 		}
 		if (target === '&' || target === 'namelock' || target === 'nl') {
-			matched === true;
-			emit(socket, 'console', '/namelock OR /nl [username] - Disallowes the used from changing their names. Requires: & ~');
+			matched = true;
+			emit(socket, 'console', '/namelock OR /nl [username] - Prevents the user from changing their name. Requires: & ~');
 		}
 		if (target === '&' || target === 'unnamelock') {
-			matched === true;
-			emit(socket, 'console', '/unnamelock - Removes name lock from user. Requres: & ~');
+			matched = true;
+			emit(socket, 'console', '/unnamelock - Removes namelock from user. Requres: & ~');
 		}
 		if (target === '&' || target === 'forcerenameto' || target === 'frt') {
 			matched = true;
@@ -1966,6 +3015,14 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			matched = true;
 			emit(socket, 'console', '/potd [pokemon] - Sets the Random Battle Pokemon of the Day. Requires: & ~');
 		}
+		if (target === '&' || target === 'hideauth' ) {
+			matched = true;
+			emit(socket, 'console', '/hideauth - Hide your staff symbol');
+		}
+		if (target === '&' || target === 'showauth' ) {
+			matched = true;
+			emit(socket, 'console', '/showauth - Reveals your staff symbol');
+		}
 		if (target === '%' || target === 'announce' || target === 'wall' ) {
 			matched = true;
 			emit(socket, 'console', '/announce OR /wall [message] - Makes an announcement. Requires: % @ & ~');
@@ -1974,13 +3031,20 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			matched = true;
 			emit(socket, 'console', '/modchat [on/off/+/%/@/&/~] - Set the level of moderated chat. Requires: @ & ~');
 		}
+		if (target === '&' || target === 'resetwarnings') {
+			matched = true;
+			emit(socket, 'console', '/resetwarnings [username] - Resets the warning level of a user. Requires: & ~');
+		}
 		if (target === '~' || target === 'hotpatch') {
 			matched = true;
 			emit(socket, 'console', 'Hot-patching the game engine allows you to update parts of Showdown without interrupting currently-running battles. Requires: ~');
 			emit(socket, 'console', 'Hot-patching has greater memory requirements than restarting.');
-			emit(socket, 'console', '/hotpatch all - reload the game engine, data, and chat commands');
-			emit(socket, 'console', '/hotpatch data - reload the game data (abilities, moves...)');
 			emit(socket, 'console', '/hotpatch chat - reload chat-commands.js');
+			emit(socket, 'console', '/hotpatch battles - spawn new simulator processes');
+		}
+		if (target === '~' || target === 'gitpull') {
+			matched = true;
+			emit(socket, 'console', '/gitpull - updates the server from the git repository and hotpatches chat-commands.js');
 		}
 		if (target === '~' || target === 'lockdown') {
 			matched = true;
@@ -1995,11 +3059,12 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 			emit(socket, 'console', '/help OR /h OR /? - Gives you help.');
 		}
 		if (!target) {
-			emit(socket, 'console', 'COMMANDS: /msg, /reply, /ip, /rating, /nick, /avatar, /rooms, /whois, /help, /away, /back, /timestamps');
+			emit(socket, 'console', 'COMMANDS: /msg, /reply, /ip, /rating, /nick, /avatar, /rooms, /whois, /help, /away, /back, /timestamps, /warnings, /poof');
 			emit(socket, 'console', 'INFORMATIONAL COMMANDS: /data, /groups, /opensource, /avatars, /faq, /rules, /intro, /tiers, /othermetas, /learn, /analysis, /calc (replace / with ! to broadcast. (Requires: + % @ & ~))');
 			emit(socket, 'console', 'For details on all commands, use /help all');
 			if (user.group !== config.groupsranking[0]) {
-				emit(socket, 'console', 'DRIVER COMMANDS: /mute, /unmute, /announce, /forcerename, /alts')
+				emit (socket, 'console', 'VOICE COMMANDS: /cpoof');
+				emit(socket, 'console', 'DRIVER COMMANDS: /mute, /unmute, /announce, /forcerename, /alts');
 				emit(socket, 'console', 'MODERATOR COMMANDS: /ban, /unban, /unbanall, /ip, /modlog, /redirect, /kick');
 				emit(socket, 'console', 'LEADER COMMANDS: /promote, /demote, /forcerenameto, /namelock, /nameunlock, /forcewin, /forcetie, /declare');
 				emit(socket, 'console', 'For details on all moderator commands, use /help @');
@@ -2035,9 +3100,10 @@ function parseCommandLocal(user, cmd, target, room, socket, message) {
 		return false;
 	}
 
-	if (message.match(/\bnimp\.org\b/)) {
-		// spam site
-		// todo: custom banlists
+	var blacklist = config.blacklist || [/\bnimp\.org\b/];
+	if (blacklist.any(function(r) {
+		return r.test(message);
+	})) {
 		return false;
 	}
 
@@ -2146,6 +3212,191 @@ function logModCommand(room, result, noBroadcast) {
 	if (!noBroadcast) room.add(result);
 	modlog.write('['+(new Date().toJSON())+'] ('+room.id+') '+result+'\n');
 }
+
+function getRandMessage(user){
+	var numMessages = 44; // numMessages will always be the highest case # + 1
+	var message = '~~ ';
+	switch(Math.floor(Math.random()*numMessages)){
+                case 0: message = message + user.name + ' was squished by EnerG\'s large behind!';
+                        break;
+                case 1: message = message + user.name + ' was eaten by SmashBrosBrawl!';
+                        break;
+                case 2: message = message + user.name + ' was raped by AOrtega!';
+                        break;
+                case 3: message = message + user.name + ' was Volt Tackled by piiiikachuuu!';
+                        break;
+                case 4: message = message + user.name + ' was mauled by Leader Wolf!';
+                        break;        
+                case 5: message = message + user.name + ' was kidnapped by iSmogoon!';
+                        break;
+                case 6: message = message + user.name + ' was taken away by Hypno!';
+                        break;
+                case 7: message = message + user.name + ' was thrown in kupo\'s Closet!';
+                        break;
+                case 8: message = message + user.name + ' was eaten alive by Sharpedos!';
+                        break;
+                case 9: message = message + user.name + ' was beaten up by an eskimo!';
+                        break;
+                case 10: message = message + user.name + ' found the meaning of life!';
+                        break;
+                case 11: message = message + user.name + ' was OHKOed by Shuckle!';
+                        break;
+                case 12: message = message + user.name + ' was thrown out a window by Aikenka!';
+                        break;
+                case 13: message = message + user.name + ' was licked by a pandaw!';
+                        break;
+                case 14: message = message + user.name + ' is blasting off again!';
+                        break;
+                case 15: message = message + user.name + ' was blown up by iSmogoon\'s experiment!';
+                        break;
+		case 16: message = message + user.name + ' is blasting off again!';
+			break;
+		case 17: message = message + 'A large Ariados came down and picked up' + user.name + ' !';
+			break;
+		case 18: message = message + user.name + ' was toxic stalled by Gliscor!';
+                        break;
+		case 19: message = message + user.name + ' was flinched by Jirachii!';
+                        break;
+                case 20: message = message + user.name + ' had their spirit sucked away by Shedinja!';
+                        break;
+		case 21: message = message + user.name + ' was slapped by EnerG\'s trout of justice!';
+			break;
+		case 22: message = message + user.name + ' peered through the hole on Shedinja\'s back';
+			break;
+		case 23: message = message + user.name + ' recieved judgment from the almighty Arceus!';
+			break;
+		case 24: message = message + user.name + ' used Final Gambit and missed!';
+			break;
+		case 25: message = message + user.name + ' pissed off a Gyarados!';
+			break;
+                case 26: message = message + user.name + ' was taken in Jessica Daniella\'s black van';
+                        break;
+                case 27: message = message + user.name + ' was thrown off a cliff by Nollan.';
+                        break;
+                case 28: message = message + user.name + ' got lost in the illusion of reality.';
+                        break;
+                case 29: message = message + user.name + ' was banned for stupidity.';
+                        break;
+                case 30: message = message + 'The Immortal accidently kicked ' + user.name + ' from the server!';
+                        break;
+                case 31: message = message + user.name + ' was crushed by Cynthia\'s Garchomp!';
+                        break;
+                case 32: message = message + user.name + ' died making love to an Excadrill!';
+                        break;
+                default: message = message + user.name + ' was burried in Smogoon\'s homework!';
+        };
+	message = message + ' ~~';
+	return message;
+}
+
+        function splitArgs(args){
+                args = args.replace(/\s+/gm, " "); // Normalise spaces
+                var result = args.split(',');  
+                for (var r in result)
+                        result[r] = result[r].trim();
+                return result;
+        }
+
+function MD5(f){function i(b,c){var d,e,f,g,h;f=b&2147483648;g=c&2147483648;d=b&1073741824;e=c&1073741824;h=(b&1073741823)+(c&1073741823);return d&e?h^2147483648^f^g:d|e?h&1073741824?h^3221225472^f^g:h^1073741824^f^g:h^f^g}function j(b,c,d,e,f,g,h){b=i(b,i(i(c&d|~c&e,f),h));return i(b<<g|b>>>32-g,c)}function k(b,c,d,e,f,g,h){b=i(b,i(i(c&e|d&~e,f),h));return i(b<<g|b>>>32-g,c)}function l(b,c,e,d,f,g,h){b=i(b,i(i(c^e^d,f),h));return i(b<<g|b>>>32-g,c)}function m(b,c,e,d,f,g,h){b=i(b,i(i(e^(c|~d),
+f),h));return i(b<<g|b>>>32-g,c)}function n(b){var c="",e="",d;for(d=0;d<=3;d++)e=b>>>d*8&255,e="0"+e.toString(16),c+=e.substr(e.length-2,2);return c}var g=[],o,p,q,r,b,c,d,e,f=function(b){for(var b=b.replace(/\r\n/g,"\n"),c="",e=0;e<b.length;e++){var d=b.charCodeAt(e);d<128?c+=String.fromCharCode(d):(d>127&&d<2048?c+=String.fromCharCode(d>>6|192):(c+=String.fromCharCode(d>>12|224),c+=String.fromCharCode(d>>6&63|128)),c+=String.fromCharCode(d&63|128))}return c}(f),g=function(b){var c,d=b.length;c=
+d+8;for(var e=((c-c%64)/64+1)*16,f=Array(e-1),g=0,h=0;h<d;)c=(h-h%4)/4,g=h%4*8,f[c]|=b.charCodeAt(h)<<g,h++;f[(h-h%4)/4]|=128<<h%4*8;f[e-2]=d<<3;f[e-1]=d>>>29;return f}(f);b=1732584193;c=4023233417;d=2562383102;e=271733878;for(f=0;f<g.length;f+=16)o=b,p=c,q=d,r=e,b=j(b,c,d,e,g[f+0],7,3614090360),e=j(e,b,c,d,g[f+1],12,3905402710),d=j(d,e,b,c,g[f+2],17,606105819),c=j(c,d,e,b,g[f+3],22,3250441966),b=j(b,c,d,e,g[f+4],7,4118548399),e=j(e,b,c,d,g[f+5],12,1200080426),d=j(d,e,b,c,g[f+6],17,2821735955),c=
+j(c,d,e,b,g[f+7],22,4249261313),b=j(b,c,d,e,g[f+8],7,1770035416),e=j(e,b,c,d,g[f+9],12,2336552879),d=j(d,e,b,c,g[f+10],17,4294925233),c=j(c,d,e,b,g[f+11],22,2304563134),b=j(b,c,d,e,g[f+12],7,1804603682),e=j(e,b,c,d,g[f+13],12,4254626195),d=j(d,e,b,c,g[f+14],17,2792965006),c=j(c,d,e,b,g[f+15],22,1236535329),b=k(b,c,d,e,g[f+1],5,4129170786),e=k(e,b,c,d,g[f+6],9,3225465664),d=k(d,e,b,c,g[f+11],14,643717713),c=k(c,d,e,b,g[f+0],20,3921069994),b=k(b,c,d,e,g[f+5],5,3593408605),e=k(e,b,c,d,g[f+10],9,38016083),
+d=k(d,e,b,c,g[f+15],14,3634488961),c=k(c,d,e,b,g[f+4],20,3889429448),b=k(b,c,d,e,g[f+9],5,568446438),e=k(e,b,c,d,g[f+14],9,3275163606),d=k(d,e,b,c,g[f+3],14,4107603335),c=k(c,d,e,b,g[f+8],20,1163531501),b=k(b,c,d,e,g[f+13],5,2850285829),e=k(e,b,c,d,g[f+2],9,4243563512),d=k(d,e,b,c,g[f+7],14,1735328473),c=k(c,d,e,b,g[f+12],20,2368359562),b=l(b,c,d,e,g[f+5],4,4294588738),e=l(e,b,c,d,g[f+8],11,2272392833),d=l(d,e,b,c,g[f+11],16,1839030562),c=l(c,d,e,b,g[f+14],23,4259657740),b=l(b,c,d,e,g[f+1],4,2763975236),
+e=l(e,b,c,d,g[f+4],11,1272893353),d=l(d,e,b,c,g[f+7],16,4139469664),c=l(c,d,e,b,g[f+10],23,3200236656),b=l(b,c,d,e,g[f+13],4,681279174),e=l(e,b,c,d,g[f+0],11,3936430074),d=l(d,e,b,c,g[f+3],16,3572445317),c=l(c,d,e,b,g[f+6],23,76029189),b=l(b,c,d,e,g[f+9],4,3654602809),e=l(e,b,c,d,g[f+12],11,3873151461),d=l(d,e,b,c,g[f+15],16,530742520),c=l(c,d,e,b,g[f+2],23,3299628645),b=m(b,c,d,e,g[f+0],6,4096336452),e=m(e,b,c,d,g[f+7],10,1126891415),d=m(d,e,b,c,g[f+14],15,2878612391),c=m(c,d,e,b,g[f+5],21,4237533241),
+b=m(b,c,d,e,g[f+12],6,1700485571),e=m(e,b,c,d,g[f+3],10,2399980690),d=m(d,e,b,c,g[f+10],15,4293915773),c=m(c,d,e,b,g[f+1],21,2240044497),b=m(b,c,d,e,g[f+8],6,1873313359),e=m(e,b,c,d,g[f+15],10,4264355552),d=m(d,e,b,c,g[f+6],15,2734768916),c=m(c,d,e,b,g[f+13],21,1309151649),b=m(b,c,d,e,g[f+4],6,4149444226),e=m(e,b,c,d,g[f+11],10,3174756917),d=m(d,e,b,c,g[f+2],15,718787259),c=m(c,d,e,b,g[f+9],21,3951481745),b=i(b,o),c=i(c,p),d=i(d,q),e=i(e,r);return(n(b)+n(c)+n(d)+n(e)).toLowerCase()};
+
+
+
+var colorCache = {};
+
+function hashColor(name) {
+	if (colorCache[name]) return colorCache[name];
+	
+	var hash = MD5(name);
+	var H = parseInt(hash.substr(4, 4), 16) % 360;
+	var S = parseInt(hash.substr(0, 4), 16) % 50 + 50;
+	var L = parseInt(hash.substr(8, 4), 16) % 20 + 25;
+	
+	var m1, m2, hue;
+	var r, g, b
+	S /=100;
+	L /= 100;
+	if (S == 0)
+		r = g = b = (L * 255).toString(16);
+	else {
+		if (L <= 0.5)
+			m2 = L * (S + 1);
+		else
+			m2 = L + S - L * S;
+		m1 = L * 2 - m2;
+		hue = H / 360;
+		r = HueToRgb(m1, m2, hue + 1/3);
+		g = HueToRgb(m1, m2, hue);
+		b = HueToRgb(m1, m2, hue - 1/3);
+	}
+	
+	
+	colorCache[name] = '#' + r + g + b;
+	return colorCache[name];
+}
+
+function HueToRgb(m1, m2, hue) {
+	var v;
+	if (hue < 0)
+		hue += 1;
+	else if (hue > 1)
+		hue -= 1;
+
+	if (6 * hue < 1)
+		v = m1 + (m2 - m1) * hue * 6;
+	else if (2 * hue < 1)
+		v = m2;
+	else if (3 * hue < 2)
+		v = m1 + (m2 - m1) * (2/3 - hue) * 6;
+	else
+		v = m1;
+
+	return (255 * v).toString(16);
+}
+
+runCommand = function(command, args, socket) {
+	emit(socket, 'console', "Running '" + command + "'" + ((args && args.length) ? " '" + args.join("' '") + "'": "") + " ...");
+	var child = require("child_process").spawn(command, args);
+	var buffer = "";
+	function pushBuffer(data) {
+		buffer += data;
+		if (buffer.indexOf("\n") >= 0) {
+			var lines = buffer.split("\n");
+			for (var l = 0; l < lines.length - 1; ++l) emit(socket, 'console', lines[l].length > 0 ? lines[l] : " ");
+			buffer = lines[lines.length - 1];
+		}
+	}
+	child.stdout.on('data', pushBuffer);
+	child.stderr.on('data', pushBuffer);
+	child.on('exit', function(code) {
+		process.nextTick(function() {
+				pushBuffer('child process exited with code ' + code);
+				emit(socket, 'console', buffer);
+				//stevo was here and jd and pandaw
+				//if (command === "git," && args[1] === "pull") {
+				if (gitpulling) {
+					for (var i in require.cache) delete require.cache[i];
+					//Tools = require('./tools.js');
+					parseCommand = require('./chat-commands.js').parseCommand;
+					emit(socket, 'console', 'The game engine has been hot-patched.');
+					gitpulling = false;
+					rooms.lobby.addRaw('<div class="message-declare"><strong><font color="FFFFFF">Server update finished.</font></strong></div>');
+				}
+				else {
+					emit(socket, 'console', 'hotpatch unsuccessful.');
+				}
+	
+			
+			});
+	});
+}
+
+
 
 // This function uses synchronous IO in order to keep it relatively simple.
 // The function takes about 0.023 seconds to run on one tested computer,
